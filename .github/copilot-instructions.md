@@ -97,16 +97,3 @@ Add a comment in the implementation indicating MCP verification:
 Include:
 - Component tests
 - Composable tests where logic exists
-
----
-
-## Example Prompt to Copilot
-
-Generate a dashboard layout with:
-- A responsive top navigation header
-- A collapsible left sidebar
-- A main content area displaying cards populated from Directus
-
-Use Nuxt UI components verified via MCP.  
-Include Vitest tests for conditional rendering and data mapping.  
-Follow Nuxt 4 best practices.
