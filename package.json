@@ -2,6 +2,10 @@
   "name": "heelgewoon",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
