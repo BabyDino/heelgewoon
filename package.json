@@ -9,7 +9,9 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@nuxt/eslint": "1.12.1",
@@ -25,6 +27,7 @@
   },
   "devDependencies": {
     "@nuxt/test-utils": "^3.21.0",
+    "@playwright/test": "^1.57.0",
     "@vue/test-utils": "^2.4.6",
     "happy-dom": "^20.0.11",
     "vitest": "^3.2.4"

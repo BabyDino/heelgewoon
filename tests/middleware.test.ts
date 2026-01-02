@@ -2,16 +2,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 // Define mock state at module level
-const mockDirectusAuth = {
-  token: { value: null as string | null },
-  user: { value: null as unknown }
-}
+const mockToken = { value: null as string | null }
+const mockUser = { value: null as unknown }
 
 let mockNavigateToResult: ReturnType<typeof vi.fn>
 
-// Mock useDirectusAuth
-mockNuxtImport('useDirectusAuth', () => {
-  return () => mockDirectusAuth
+// Mock useDirectusToken
+mockNuxtImport('useDirectusToken', () => {
+  return () => ({ token: mockToken })
+})
+
+// Mock useDirectusUser
+mockNuxtImport('useDirectusUser', () => {
+  return () => mockUser
 })
 
 // Mock navigateTo - using a factory pattern
@@ -33,8 +36,8 @@ mockNuxtImport('defineNuxtRouteMiddleware', () => {
 describe('auth middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockDirectusAuth.token.value = null
-    mockDirectusAuth.user.value = null
+    mockToken.value = null
+    mockUser.value = null
     mockNavigateToResult = vi.fn()
   })
 
@@ -49,8 +52,8 @@ describe('auth middleware', () => {
   })
 
   it('should not redirect when authenticated', async () => {
-    mockDirectusAuth.token.value = 'test-token'
-    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
+    mockToken.value = 'test-token'
+    mockUser.value = { id: 'user-1', email: 'test@example.com' }
 
     vi.resetModules()
     const authMiddleware = await import('~/middleware/auth')
@@ -65,14 +68,14 @@ describe('auth middleware', () => {
 describe('guest middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockDirectusAuth.token.value = null
-    mockDirectusAuth.user.value = null
+    mockToken.value = null
+    mockUser.value = null
     mockNavigateToResult = vi.fn()
   })
 
   it('should redirect to authenticated when already logged in', async () => {
-    mockDirectusAuth.token.value = 'test-token'
-    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
+    mockToken.value = 'test-token'
+    mockUser.value = { id: 'user-1', email: 'test@example.com' }
 
     vi.resetModules()
     const guestMiddleware = await import('~/middleware/guest')
@@ -84,8 +87,8 @@ describe('guest middleware', () => {
   })
 
   it('should not redirect when not authenticated', async () => {
-    mockDirectusAuth.token.value = null
-    mockDirectusAuth.user.value = null
+    mockToken.value = null
+    mockUser.value = null
 
     vi.resetModules()
     const guestMiddleware = await import('~/middleware/guest')

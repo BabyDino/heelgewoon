@@ -4,13 +4,25 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 // Mock useDirectusAuth
 const mockDirectusAuth = {
   login: vi.fn(),
-  logout: vi.fn(),
-  user: { value: null as unknown },
-  token: { value: null as string | null }
+  logout: vi.fn()
 }
+
+// Mock useDirectusToken
+const mockToken = { value: null as string | null }
+
+// Mock useDirectusUser
+const mockUser = { value: null as unknown }
 
 mockNuxtImport('useDirectusAuth', () => {
   return () => mockDirectusAuth
+})
+
+mockNuxtImport('useDirectusToken', () => {
+  return () => ({ token: mockToken })
+})
+
+mockNuxtImport('useDirectusUser', () => {
+  return () => mockUser
 })
 
 // Mock useState
@@ -36,8 +48,8 @@ mockNuxtImport('computed', () => {
 describe('useAuth composable with nuxt-directus', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockDirectusAuth.token.value = null
-    mockDirectusAuth.user.value = null
+    mockToken.value = null
+    mockUser.value = null
     mockLoadingState.value = false
     mockErrorState.value = null
   })
@@ -52,13 +64,13 @@ describe('useAuth composable with nuxt-directus', () => {
 
   it('should login successfully with valid credentials', async () => {
     mockDirectusAuth.login.mockResolvedValueOnce(undefined)
-    mockDirectusAuth.user.value = {
+    mockUser.value = {
       id: 'user-1',
       email: 'test@example.com',
       first_name: 'Test',
       last_name: 'User'
     }
-    mockDirectusAuth.token.value = 'test-token'
+    mockToken.value = 'test-token'
 
     const { useAuth } = await import('~/composables/useAuth')
     const { login } = useAuth()
@@ -89,8 +101,8 @@ describe('useAuth composable with nuxt-directus', () => {
   })
 
   it('should logout and clear state', async () => {
-    mockDirectusAuth.token.value = 'test-token'
-    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
+    mockToken.value = 'test-token'
+    mockUser.value = { id: 'user-1', email: 'test@example.com' }
     mockDirectusAuth.logout.mockResolvedValueOnce(undefined)
 
     const { useAuth } = await import('~/composables/useAuth')

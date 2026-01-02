@@ -7,7 +7,9 @@ export interface AuthUser {
 }
 
 export function useAuth() {
-  const { login: directusLogin, logout: directusLogout, user: directusUser, token } = useDirectusAuth()
+  const { login: directusLogin, logout: directusLogout } = useDirectusAuth()
+  const { token } = useDirectusToken()
+  const directusUser = useDirectusUser()
   const isLoading = useState('auth_loading', () => false)
   const error = useState<string | null>('auth_error', () => null)
 
