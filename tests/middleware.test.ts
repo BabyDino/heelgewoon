@@ -2,17 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 // Define mock state at module level
-const mockAuthState = {
-  isAuthenticated: { value: false },
+const mockDirectusAuth = {
   token: { value: null as string | null },
-  fetchUser: vi.fn()
+  user: { value: null as unknown }
 }
 
 let mockNavigateToResult: ReturnType<typeof vi.fn>
 
-// Mock the useAuth composable
-mockNuxtImport('useAuth', () => {
-  return () => mockAuthState
+// Mock useDirectusAuth
+mockNuxtImport('useDirectusAuth', () => {
+  return () => mockDirectusAuth
 })
 
 // Mock navigateTo - using a factory pattern
@@ -34,8 +33,8 @@ mockNuxtImport('defineNuxtRouteMiddleware', () => {
 describe('auth middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockAuthState.isAuthenticated.value = false
-    mockAuthState.token.value = null
+    mockDirectusAuth.token.value = null
+    mockDirectusAuth.user.value = null
     mockNavigateToResult = vi.fn()
   })
 
@@ -46,13 +45,12 @@ describe('auth middleware', () => {
 
     await handler({}, {})
 
-    // Verify the redirect happened to login
     expect(mockNavigateToResult).toHaveBeenCalledWith('/login')
   })
 
   it('should not redirect when authenticated', async () => {
-    mockAuthState.isAuthenticated.value = true
-    mockAuthState.token.value = 'test-token'
+    mockDirectusAuth.token.value = 'test-token'
+    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
 
     vi.resetModules()
     const authMiddleware = await import('~/middleware/auth')
@@ -60,36 +58,21 @@ describe('auth middleware', () => {
 
     const result = await handler({}, {})
 
-    // Result should be undefined (no redirect)
     expect(result).toBeUndefined()
-  })
-
-  it('should fetch user if token exists but not authenticated', async () => {
-    mockAuthState.token.value = 'test-token'
-    mockAuthState.isAuthenticated.value = false
-    mockAuthState.fetchUser.mockResolvedValueOnce(undefined)
-
-    vi.resetModules()
-    const authMiddleware = await import('~/middleware/auth')
-    const handler = authMiddleware.default
-
-    await handler({}, {})
-
-    expect(mockAuthState.fetchUser).toHaveBeenCalled()
   })
 })
 
 describe('guest middleware', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockAuthState.isAuthenticated.value = false
-    mockAuthState.token.value = null
+    mockDirectusAuth.token.value = null
+    mockDirectusAuth.user.value = null
     mockNavigateToResult = vi.fn()
   })
 
   it('should redirect to authenticated when already logged in', async () => {
-    mockAuthState.isAuthenticated.value = true
-    mockAuthState.token.value = 'test-token'
+    mockDirectusAuth.token.value = 'test-token'
+    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
 
     vi.resetModules()
     const guestMiddleware = await import('~/middleware/guest')
@@ -101,8 +84,8 @@ describe('guest middleware', () => {
   })
 
   it('should not redirect when not authenticated', async () => {
-    mockAuthState.isAuthenticated.value = false
-    mockAuthState.token.value = null
+    mockDirectusAuth.token.value = null
+    mockDirectusAuth.user.value = null
 
     vi.resetModules()
     const guestMiddleware = await import('~/middleware/guest')

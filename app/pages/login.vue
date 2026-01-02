@@ -8,8 +8,10 @@ definePageMeta({
   middleware: ['guest']
 })
 
-const { login, isLoading, error } = useAuth()
+const { login: directusLogin } = useDirectusAuth()
 const router = useRouter()
+const isLoading = ref(false)
+const error = ref<string | null>(null)
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -24,9 +26,17 @@ const state = reactive({
 })
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  const success = await login(event.data.email, event.data.password)
-  if (success) {
+  isLoading.value = true
+  error.value = null
+
+  try {
+    await directusLogin({ email: event.data.email, password: event.data.password })
     await router.push('/authenticated')
+  } catch (err: unknown) {
+    const e = err as { data?: { errors?: Array<{ message?: string }> }, message?: string }
+    error.value = e.data?.errors?.[0]?.message || e.message || 'Login failed'
+  } finally {
+    isLoading.value = false
   }
 }
 </script>

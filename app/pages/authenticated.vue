@@ -5,12 +5,20 @@ definePageMeta({
   middleware: ['auth']
 })
 
-const { user, logout, isLoading } = useAuth()
+const { user: directusUser, logout: directusLogout } = useDirectusAuth()
+const isLoading = ref(false)
 const router = useRouter()
 
+const user = computed(() => directusUser.value)
+
 async function handleLogout() {
-  logout()
-  await router.push('/login')
+  isLoading.value = true
+  try {
+    await directusLogout()
+    await router.push('/login')
+  } finally {
+    isLoading.value = false
+  }
 }
 </script>
 

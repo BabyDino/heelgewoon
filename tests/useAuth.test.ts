@@ -1,36 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
-// Mock $fetch
-const mockFetch = vi.fn()
-vi.stubGlobal('$fetch', mockFetch)
+// Mock useDirectusAuth
+const mockDirectusAuth = {
+  login: vi.fn(),
+  logout: vi.fn(),
+  user: { value: null as unknown },
+  token: { value: null as string | null }
+}
 
-// Mock useCookie
-const mockCookieValue = { value: null as string | null }
-mockNuxtImport('useCookie', () => {
-  return () => mockCookieValue
+mockNuxtImport('useDirectusAuth', () => {
+  return () => mockDirectusAuth
 })
 
 // Mock useState
-const mockUserState = { value: null as unknown }
 const mockLoadingState = { value: false }
 const mockErrorState = { value: null as string | null }
 mockNuxtImport('useState', () => {
   return (key: string, init?: () => unknown) => {
-    if (key === 'auth_user') return mockUserState
     if (key === 'auth_loading') return mockLoadingState
     if (key === 'auth_error') return mockErrorState
     return { value: init?.() ?? null }
   }
-})
-
-// Mock useRuntimeConfig
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => ({
-    public: {
-      directusUrl: 'http://localhost:8055'
-    }
-  })
 })
 
 // Mock readonly and computed
@@ -42,11 +33,11 @@ mockNuxtImport('computed', () => {
   return <T>(fn: () => T) => ({ value: fn() })
 })
 
-describe('useAuth composable', () => {
+describe('useAuth composable with nuxt-directus', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockCookieValue.value = null
-    mockUserState.value = null
+    mockDirectusAuth.token.value = null
+    mockDirectusAuth.user.value = null
     mockLoadingState.value = false
     mockErrorState.value = null
   })
@@ -60,22 +51,14 @@ describe('useAuth composable', () => {
   })
 
   it('should login successfully with valid credentials', async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        data: {
-          access_token: 'test-access-token',
-          refresh_token: 'test-refresh-token',
-          expires: 900000
-        }
-      })
-      .mockResolvedValueOnce({
-        data: {
-          id: 'user-1',
-          email: 'test@example.com',
-          first_name: 'Test',
-          last_name: 'User'
-        }
-      })
+    mockDirectusAuth.login.mockResolvedValueOnce(undefined)
+    mockDirectusAuth.user.value = {
+      id: 'user-1',
+      email: 'test@example.com',
+      first_name: 'Test',
+      last_name: 'User'
+    }
+    mockDirectusAuth.token.value = 'test-token'
 
     const { useAuth } = await import('~/composables/useAuth')
     const { login } = useAuth()
@@ -83,20 +66,14 @@ describe('useAuth composable', () => {
     const success = await login('test@example.com', 'password123')
 
     expect(success).toBe(true)
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8055/auth/login',
-      expect.objectContaining({
-        method: 'POST',
-        body: {
-          email: 'test@example.com',
-          password: 'password123'
-        }
-      })
-    )
+    expect(mockDirectusAuth.login).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123'
+    })
   })
 
   it('should handle login failure', async () => {
-    mockFetch.mockRejectedValueOnce({
+    mockDirectusAuth.login.mockRejectedValueOnce({
       data: {
         errors: [{ message: 'Invalid credentials' }]
       }
@@ -112,15 +89,15 @@ describe('useAuth composable', () => {
   })
 
   it('should logout and clear state', async () => {
-    mockCookieValue.value = 'test-token'
-    mockUserState.value = { id: 'user-1', email: 'test@example.com' }
+    mockDirectusAuth.token.value = 'test-token'
+    mockDirectusAuth.user.value = { id: 'user-1', email: 'test@example.com' }
+    mockDirectusAuth.logout.mockResolvedValueOnce(undefined)
 
     const { useAuth } = await import('~/composables/useAuth')
-    const { logout, user, token } = useAuth()
+    const { logout } = useAuth()
 
-    logout()
+    await logout()
 
-    expect(token.value).toBe(null)
-    expect(user.value).toBe(null)
+    expect(mockDirectusAuth.logout).toHaveBeenCalled()
   })
 })
