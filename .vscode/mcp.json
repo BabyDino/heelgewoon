@@ -7,6 +7,21 @@
     "nuxt-ui": {
       "type": "http",
       "url": "https://ui.nuxt.com/mcp"
+    },
+    "directus": {
+      "type": "http",
+      "url": "https://api.addr.nl/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:directus-token}"
+      }
     }
-  }
+  },
+  "inputs": [
+    {
+      "id": "directus-token",
+      "type": "promptString",
+      "description": "Directus Access Token",
+      "password": true
+    }
+  ]
 }
